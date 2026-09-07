@@ -5,7 +5,14 @@ import {
   SafeAreaProvider,
 } from 'react-native-safe-area-context';
 import React from 'react';
-import { HomeScreen } from './src/screens/HomeScreen';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { NavigationContainer } from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+
+import {Dashboard} from './src/screens/Dashboard';
+import {FullScreenCamera} from './src/screens/FullScreenCamera';
+
+const Stack = createNativeStackNavigator();
 
 function App() {
   const isDarkMode = useColorScheme() === 'dark';
@@ -13,23 +20,24 @@ function App() {
   return (
     <SafeAreaProvider>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-      <AppContent />
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <NavigationContainer>
+          <AppNavigator />
+        </NavigationContainer>
+      </GestureHandlerRootView>
     </SafeAreaProvider>
   );
 }
 
-function AppContent() {
+
+export function AppNavigator() {
   return (
-    <View style={styles.container}>
-      <HomeScreen />
-    </View>
+    <Stack.Navigator screenOptions={{ headerShown: false}}>
+      <Stack.Screen name="Dashboard" component={Dashboard}/> 
+      <Stack.Screen name="FullScreenCamera" component={FullScreenCamera}/>
+
+    </Stack.Navigator>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-});
 
 export default App;
