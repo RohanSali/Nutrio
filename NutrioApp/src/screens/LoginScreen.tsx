@@ -20,6 +20,7 @@ import {
   GoogleSignin,
   statusCodes,
 } from "@react-native-google-signin/google-signin";
+import { ensureUserProfile } from "../scripts/firestore_handler";
 
 GoogleSignin.configure({
   webClientId:
@@ -96,7 +97,12 @@ export function LoginScreen() {
       const auth = getAuth();
 
       if (isCreatingAccount) {
-        await createUserWithEmailAndPassword(auth, cleanEmail, password);
+        const credential = await createUserWithEmailAndPassword(
+          auth,
+          cleanEmail,
+          password
+        );
+        await ensureUserProfile(credential.user.uid);
       } else {
         await signInWithEmailAndPassword(auth, cleanEmail, password);
       }
@@ -136,7 +142,8 @@ export function LoginScreen() {
       }
 
       const googleCredential = GoogleAuthProvider.credential(idToken);
-      await signInWithCredential(getAuth(), googleCredential);
+      const credential = await signInWithCredential(getAuth(), googleCredential);
+      await ensureUserProfile(credential.user.uid);
     } catch (error: any) {
       console.error("Google sign-in error:", error);
 
