@@ -1,8 +1,10 @@
 import "./global.css";
 
-import { StatusBar, useColorScheme, View, ActivityIndicator } from 'react-native';
+import { StatusBar, StyleSheet, useColorScheme, View, ActivityIndicator } from 'react-native';
 import React, { useEffect, useState } from "react";
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
+import { cssInterop } from 'nativewind';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
@@ -12,6 +14,9 @@ import { Dashboard } from './src/screens/Dashboard';
 import { FullScreenCamera } from './src/screens/FullScreenCamera';
 import { LoginScreen } from "./src/screens/LoginScreen";
 import { ProfileScreen } from "./src/screens/ProfileScreen";
+import { HistoryScreen } from "./src/screens/HistoryScreen";
+
+cssInterop(SafeAreaView, { className: 'style' });
 
 const Stack = createNativeStackNavigator();
 
@@ -61,11 +66,13 @@ export function AppNavigator() {
           <Stack.Screen name="Dashboard" component={Dashboard}/> 
           <Stack.Screen name="FullScreenCamera" component={FullScreenCamera}/>
           <Stack.Screen name="ProfileScreen" component={ProfileScreen}/>
+          <Stack.Screen name="History" component={HistoryScreen}/>
         </>
       ) :
       (
         <Stack.Screen name="LoginScreen" component={LoginScreen}/>
       )}
+
     </Stack.Navigator>
   );
 }
