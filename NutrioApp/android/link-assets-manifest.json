@@ -2,6 +2,10 @@
   "migIndex": 1,
   "data": [
     {
+      "path": "src/assets/fonts/Inter_18pt-Black (1).ttf",
+      "sha1": "4dbdd9baf9a7049838cc0e472e0136c4f310cc78"
+    },
+    {
       "path": "src/assets/fonts/Inter_18pt-BlackItalic.ttf",
       "sha1": "1d5eae80ec55b454fad2bc00e3190e006ebbdb9f"
     },
@@ -12,6 +16,10 @@
     {
       "path": "src/assets/fonts/Inter_18pt-Light.ttf",
       "sha1": "6b041e6fc61656b930d8ef638a0b9d6a0ac8e084"
+    },
+    {
+      "path": "src/assets/fonts/Inter_18pt-SemiBold.ttf",
+      "sha1": "f3e44abd6661d5b861e66db22f4f79a6c466cd00"
     },
     {
       "path": "src/assets/fonts/Inter_24pt-Light.ttf",
