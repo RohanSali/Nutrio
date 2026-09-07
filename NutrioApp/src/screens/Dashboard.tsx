@@ -8,7 +8,7 @@ import { useNavigation } from '@react-navigation/native';
 
 export function Dashboard() {
     console.log('Dashboard rendered');
-    const navigation = useNavigation();
+    const navigation = useNavigation<any>();
     const cameraRef = useRef<any>(null);
     const [name, setName] = useState('Aadi');
     const [activeCamera, setActiveCamera] = useState(true);
@@ -48,9 +48,12 @@ export function Dashboard() {
     <SafeAreaView className="flex-1 bg-white">
         <View className="h-[80px] px-4 py-0 flex-row justify-between items-center"> 
             <Text className="text-[30px] font-bold text-black ">Hello {name}!</Text>
-            <View className="w-[50px] h-[50px] items-center justify-center rounded-full bg-blue-500">
+            <Pressable
+                onPress={() => navigation.navigate('ProfileScreen')}
+                className="w-[50px] h-[50px] items-center justify-center rounded-full bg-blue-500"
+            >
                 <Text className="text-white text-center text-[24px] font-bold">{initial}</Text>
-            </View>
+            </Pressable>
         </View>
         <View className="w-full px-[10px] py-[4px] items-center justify-center">
             <GestureDetector gesture={swipeDownGesture}>
