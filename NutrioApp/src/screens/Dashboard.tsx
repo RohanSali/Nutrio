@@ -6,7 +6,7 @@ import { Camera, CameraType } from 'react-native-camera-kit';
 import {Gesture, GestureDetector} from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
 import Animated, {useSharedValue,useAnimatedStyle,withRepeat,withTiming,Easing, cancelAnimation} from 'react-native-reanimated';
-import { type Language, type Theme, type Units, type UserProfile, subscribeToUserProfile } from "../scripts/profile_handler";
+import { type Language, type Theme, type Units, type UserProfile, subscribeToUserProfile } from "../scripts/firestore_handler";
 import { getAuth } from "@react-native-firebase/auth";
 
 export function Dashboard() {

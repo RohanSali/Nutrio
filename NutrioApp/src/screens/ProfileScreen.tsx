@@ -21,13 +21,12 @@ import {
   type Theme,
   type Units,
   type UserProfile,
-  deleteUserProfileData,
   logoutUser,
   subscribeToUserProfile,
   updateUserAllergies,
   updateUserProfile,
   updateUserSettings,
-} from "../scripts/profile_handler";
+} from "../scripts/firestore_handler";
 
 import {ALLERGY_OPTIONS,NONE_OPTION,} from "../constants/allergies";
 
@@ -282,37 +281,6 @@ export function ProfileScreen({ navigation }: any) {
     }
   };
 
-  const handleDeleteProfileData = () => {
-    if (!uid) return;
-
-    Alert.alert(
-      "Delete profile data?",
-      "This will clear your Nutrio profile information from Firestore. Your Firebase account will not be deleted.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              setSaving(true);
-              await deleteUserProfileData(uid);
-              Alert.alert("Profile data deleted", "Your profile data was cleared.");
-            } catch (error) {
-              console.error("Failed to delete profile data:", error);
-              Alert.alert(
-                "Unable to delete profile data",
-                "Please try again."
-              );
-            } finally {
-              setSaving(false);
-            }
-          },
-        },
-      ]
-    );
-  };
-
   if (loading) {
     return (
       <SafeAreaView className="flex-1 items-center justify-center bg-[#EAEEE3]">
@@ -520,18 +488,6 @@ export function ProfileScreen({ navigation }: any) {
                 </Text>
               </>
             )}
-          </Pressable>
-
-          {/* Delete local profile data from Firestore */}
-          <Pressable
-            onPress={handleDeleteProfileData}
-            disabled={saving}
-            className="mt-3 h-12 flex-row items-center justify-center"
-          >
-            <Trash2 color="#9A4B4B" size={17} />
-            <Text className="ml-2 text-[14px] font-medium text-[#9A4B4B]">
-              Delete Profile Data
-            </Text>
           </Pressable>
         </View>
       </ScrollView>
