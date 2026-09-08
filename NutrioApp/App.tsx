@@ -17,6 +17,8 @@ import { LoginScreen } from "./src/screens/LoginScreen";
 import { ProfileScreen } from "./src/screens/ProfileScreen";
 import { HistoryScreen } from "./src/screens/HistoryScreen";
 import { FetchInfoScreen } from "./src/screens/FetchInfoScreen";
+import { Import } from "lucide-react-native";
+import { ImagePreviewScreen } from "./src/screens/ImagePreviewScreen";
 
 cssInterop(SafeAreaView, { className: 'style' });
 
@@ -111,6 +113,7 @@ export function AppNavigator() {
           <Stack.Screen name="FullScreenCamera" component={FullScreenCamera}/>
           <Stack.Screen name="ProfileScreen" component={ProfileScreen}/>
           <Stack.Screen name="History" component={HistoryScreen}/>
+          <Stack.Screen name="ImagePreview" component={ImagePreviewScreen}/>
         </>
       ) : user ? (
         <Stack.Screen name="FetchInfoScreen" component={FetchInfoScreen} />
