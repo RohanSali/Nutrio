@@ -19,6 +19,7 @@ import { HistoryScreen } from "./src/screens/HistoryScreen";
 import { FetchInfoScreen } from "./src/screens/FetchInfoScreen";
 import { Import } from "lucide-react-native";
 import { ImagePreviewScreen } from "./src/screens/ImagePreviewScreen";
+import TestScreen from "./src/screens/TestScreen";
 
 cssInterop(SafeAreaView, { className: 'style' });
 
@@ -118,10 +119,9 @@ export function AppNavigator() {
       ) : user ? (
         <Stack.Screen name="FetchInfoScreen" component={FetchInfoScreen} />
       ) : (
-        <>
-          <Stack.Screen name="LoginScreen" component={LoginScreen}/>
-        </>
+        <Stack.Screen name="LoginScreen" component={LoginScreen}/>
       )}
+      <Stack.Screen name="TestScreen" component={TestScreen} />
 
     </Stack.Navigator>
   );
