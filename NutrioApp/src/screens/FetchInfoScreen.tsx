@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -8,7 +8,8 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { getAuth } from "@react-native-firebase/auth";
+import { getAuth, onAuthStateChanged } from "@react-native-firebase/auth";
+import { useNavigation } from "@react-navigation/native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view";
 import { saveUserBasicInfo } from "../scripts/firestore_handler";
@@ -16,6 +17,7 @@ import { saveUserBasicInfo } from "../scripts/firestore_handler";
 import {ALLERGY_OPTIONS,NONE_OPTION,} from "../constants/allergies";
 
 export function FetchInfoScreen() {
+  const navigation = useNavigation<any>();
   const [name, setName] = useState("");
   const [height, setHeight] = useState("");
   const [weight, setWeight] = useState("");
@@ -23,6 +25,19 @@ export function FetchInfoScreen() {
   const [allergies, setAllergies] = useState<string[]>([NONE_OPTION]);
   const [allergySearch, setAllergySearch] = useState("");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(getAuth(), (user) => {
+      if (!user) {
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "LoginScreen" }],
+        });
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation]);
 
   const filteredAllergyOptions = useMemo(() => {
     const query = allergySearch.trim().toLowerCase();
