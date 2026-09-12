@@ -76,7 +76,7 @@ async def upload_user_image(
     if len(file_data) > MAX_FILE_SIZE:
         raise HTTPException(
             status_code=413,
-            detail="Image must be smaller than 10 MB",
+            detail="Image must be smaller than 100 MB",
         )
 
     if len(file_data) == 0:
