@@ -1,4 +1,4 @@
-import { doc, getDoc, getFirestore, onSnapshot, setDoc,type FirestoreError, type Unsubscribe, } from "@react-native-firebase/firestore";
+import { doc, getDoc, getFirestore, onSnapshot, serverTimestamp, setDoc, type FirestoreError, type Unsubscribe } from "@react-native-firebase/firestore";
 import { getAuth, signOut } from "@react-native-firebase/auth";
 import { GoogleSignin } from "@react-native-google-signin/google-signin";
 
@@ -17,8 +17,54 @@ export type UserBasicInfo = {
   allergies: string[];
 };
 
+export type ScanRecord = {
+  userId: string;
+  imageUrl: string;
+  scores: {
+    calories: number | null;
+    nutrients: number | null;
+    healthImpact: number | null;
+  };
+  grade: string | null;
+  allergiesDetected: string[];
+  alternativeProducts: string[];
+  processedFindings: string[];
+};
+
 const getUserProfileReference = (uid: string) =>
   doc(getFirestore(), "users", uid);
+
+const getScanReference = (scanId: string) =>
+  doc(getFirestore(), "scans", scanId);
+
+const getScanHistoryReference = (uid: string, scanId: string) =>
+  doc(getFirestore(), "history", uid, "scans", scanId);
+
+export async function createScanRecord(
+  uid: string,
+  scanId: string,
+  imageUrl: string
+): Promise<void> {
+  const scan: ScanRecord = {
+    userId: uid,
+    imageUrl,
+    scores: {
+      calories: null,
+      nutrients: null,
+      healthImpact: null,
+    },
+    grade: null,
+    allergiesDetected: [],
+    alternativeProducts: [],
+    processedFindings: [],
+  };
+
+  await setDoc(getScanReference(scanId), scan);
+  await setDoc(getScanHistoryReference(uid, scanId), {
+    scanId,
+    timestamp: serverTimestamp(),
+  });
+}
 
 export async function ensureUserProfile(uid: string): Promise<void> {
   const reference = getUserProfileReference(uid);

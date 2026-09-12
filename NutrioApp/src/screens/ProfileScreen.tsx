@@ -490,10 +490,6 @@ export function ProfileScreen({ navigation }: any) {
             )}
           </Pressable>
 
-          {/*Test Code*/}
-          <Pressable onPress={() => navigation.navigate('TestScreen')} className="mt-5 mb-5 h-14 flex-row items-center justify-center gap-3 rounded-2xl border border-gray-200 bg-[#FBF5EE]">
-            <Text className="text-base font-semibold text-gray-800">Go to TestPage</Text>
-          </Pressable>
         </View>
       </ScrollView>
 
