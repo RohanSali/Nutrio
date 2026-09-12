@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from app.routes.images import router as images_router
+from app.routes.auth import router as auth_router
 
 
 app = FastAPI(
@@ -9,9 +10,8 @@ app = FastAPI(
 )
 
 
-app.include_router(
-    images_router
-)
+app.include_router(images_router)
+app.include_router(auth_router)
 
 
 @app.get("/")

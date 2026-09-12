@@ -3,3 +3,4 @@ python-dotenv
 imagekitio
 python-multipart
 firebase-admin
+email-validator

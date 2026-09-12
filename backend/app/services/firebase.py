@@ -5,6 +5,7 @@ from pathlib import Path
 
 from firebase_admin import credentials
 from firebase_admin import auth
+from firebase_admin import firestore
 
 
 # Initialize Firebase Admin only once
@@ -19,6 +20,10 @@ if not firebase_admin._apps:
         )
 
     firebase_admin.initialize_app(cred)
+
+
+def get_firestore_client():
+    return firestore.client()
 
 
 def verify_firebase_token(id_token: str):
