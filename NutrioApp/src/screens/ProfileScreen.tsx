@@ -489,6 +489,7 @@ export function ProfileScreen({ navigation }: any) {
               </>
             )}
           </Pressable>
+
         </View>
       </ScrollView>
 
