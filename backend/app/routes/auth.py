@@ -1,10 +1,11 @@
 import hashlib
 import hmac
+import json
 import os
 import secrets
-import smtplib
+import urllib.error
+import urllib.request
 from datetime import datetime, timedelta, timezone
-from email.message import EmailMessage
 
 from fastapi import APIRouter, HTTPException
 from firebase_admin import auth, firestore
@@ -47,18 +48,29 @@ def _otp_hash(otp: str) -> str:
 
 
 def _send_otp_email(email: str, otp: str) -> None:
-    message = EmailMessage()
-    message["Subject"] = "Your Nutrio verification code"
-    message["From"] = os.environ["SMTP_FROM_EMAIL"]
-    message["To"] = email
-    message.set_content(
-        f"Your Nutrio verification code is {otp}. It expires in {OTP_TTL_MINUTES} minutes."
+    payload = json.dumps({
+        "from": os.environ["RESEND_FROM_EMAIL"],
+        "to": [email],
+        "subject": "Your Nutrio verification code",
+        "text": f"Your Nutrio verification code is {otp}. It expires in {OTP_TTL_MINUTES} minutes.",
+    }).encode()
+    request = urllib.request.Request(
+        "https://api.resend.com/emails",
+        data=payload,
+        headers={
+            "Authorization": f"Bearer {os.environ['RESEND_API_KEY']}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
     )
 
-    with smtplib.SMTP(os.environ["SMTP_HOST"], int(os.environ.get("SMTP_PORT", "587"))) as smtp:
-        smtp.starttls()
-        smtp.login(os.environ["SMTP_USERNAME"], os.environ["SMTP_PASSWORD"])
-        smtp.send_message(message)
+    try:
+        with urllib.request.urlopen(request, timeout=15) as response:
+            if response.status >= 300:
+                raise RuntimeError(f"Resend returned HTTP {response.status}")
+    except urllib.error.HTTPError as error:
+        details = error.read().decode(errors="replace")
+        raise RuntimeError(f"Resend returned HTTP {error.code}: {details}") from error
 
 
 @router.post("/send-email-otp")
