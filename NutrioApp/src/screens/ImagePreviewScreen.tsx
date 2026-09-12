@@ -22,18 +22,28 @@ export function ImagePreviewScreen() {
     };
 
     const handleCrop = async () => {
-        try {
-            const cropped = await ImageCropPicker.openCropper({path: uri, width: 1000,height: 1000, cropperToolbarTitle: 'Crop Image', freeStyleCropEnabled: true});
+    try {
+        const cropped = await ImageCropPicker.openCropper({
+            path: uri,
+            freeStyleCropEnabled: true,       // user can drag to any rectangle shape
+            cropperToolbarTitle: 'Crop Image',
+            showCropGuidelines: true,
+            showCropFrame: true,
+            enableRotationGesture: true,       // lets user rotate while cropping
+            cropperMinZoom: 1,
+            cropperMaxZoom: 5,                 // pinch-zoom range, explicit just in case
+            compressImageQuality: 0.9,
+            // NOTE: no width/height here — output keeps the aspect ratio the user actually drew
+        });
 
-            setUri(cropped.path);
-        } catch (error: any) {
-            // User cancelling the crop throws an error too — ignore that case silently
-            if (error?.code !== 'E_PICKER_CANCELLED') {
-                console.error('Crop failed:', error);
-                Alert.alert('Crop failed', 'Please try again.');
-            }
+        setUri(cropped.path);
+    } catch (error: any) {
+        if (error?.code !== 'E_PICKER_CANCELLED') {
+            console.error('Crop failed:', error);
+            Alert.alert('Crop failed', 'Please try again.');
         }
-    };
+    }
+};
 
     return (
         <SafeAreaView className="flex-1 bg-black" style={{ flex: 1 }}>

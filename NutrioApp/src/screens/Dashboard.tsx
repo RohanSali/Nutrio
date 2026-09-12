@@ -83,12 +83,14 @@ export function Dashboard() {
     const captureImage = async () => {
         if (cameraRef.current) {
         const data = await cameraRef.current.capture();
-        console.log('Captured Image URI:', data.uri); // Path to temporary JPEG
+        console.log('Captured Image URI:', data.uri);
+        navigation.navigate('ImagePreview', { uri: data.uri });
         }
     };
     
     const swipeDownGesture = Gesture.Pan()
     .runOnJS(true)
+    .minDistance(15)
     .onEnd(event => {
         if (activeCamera && event.translationY > 100 ) {
             setActiveCamera(false);
@@ -109,36 +111,41 @@ export function Dashboard() {
                 </Pressable>
             </View>
             <View onLayout={(e) => {if (containerHeight === 0) { setContainerHeight(e.nativeEvent.layout.height);}}} className="w-full px-[10px] py-[4px] items-center justify-center bg-[#eaeee3]">
-                <GestureDetector gesture={swipeDownGesture}>
-                    <Pressable onPress={() => setActiveCamera(true)} className="w-full aspect-square rounded-[30px] overflow-hidden bg-gray-300">
-                        {activeCamera ?
-                            // Camera Module
-                            (<View className="flex-1">
-                                <Camera style={{ width: '100%', height: '100%' }} cameraType={CameraType.Back} />
-                                <Animated.View style={[{position: 'absolute',left:0, right: 0, height: 2, backgroundColor:'#3b82f6', shadowColor: '#3b82f6',shadowOpacity: 0.8,shadowRadius: 8,shadowOffset: { width: 0, height: 0 }, elevation: 6,}, scanLineStyle]}/>
-                                <View className="absolute bottom-[55px] left-0 right-0 items-center">
-                                    <Pressable onPress={captureImage} className="w-[55px] h-[55px] items-center justify-center rounded-full bg-[#586256]">
-                                        <ScanText color={'white'}/>
-                                    </Pressable>
-                                </View>
-                                <View className="absolute bottom-5 left-0 right-0 items-center">
-                                    <Text className="text-white" style={{fontFamily:'Inter_24pt-Regular'}}>Swipe down to open in full mode</Text>
-                                </View>
-                            </View>):
-                            // Hero Image Section
-                            <View>
-                                <Image source={require('../assets/instuction.png')} className="w-full h-full" resizeMode="cover" />
-                                <View className="absolute bottom-[55px] left-0 right-0 items-center">
-                                    <Pressable onPress={() => setActiveCamera(true)} className="h-[45px] px-4 flex-row items-center justify-center gap-2 rounded-[24px] bg-[#586256]" style={{ elevation: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 6}}>
-                                        <ScanText color={'white'} size={20} />
-                                        <Text className="text-white text-[16px]" style={{fontFamily: 'Inter_18pt-SemiBold'}}>Scan</Text>
-                                    </Pressable>
-                                </View>
-                            </View>
-                        }
+            <View className="w-full aspect-square rounded-[30px] overflow-hidden bg-gray-300">
+                {activeCamera ?
+                    <View className="flex-1">
+
+                        {/* Gesture only wraps the camera feed itself */}
+                        <GestureDetector gesture={swipeDownGesture}>
+                            <Camera style={{ width: '100%', height: '100%' }} cameraType={CameraType.Back} />
+                        </GestureDetector>
+
+                        <Animated.View style={[{position: 'absolute', left:0, right: 0, height: 2, backgroundColor:'#3b82f6', shadowColor: '#3b82f6', shadowOpacity: 0.8, shadowRadius: 8, shadowOffset: { width: 0, height: 0 }, elevation: 6}, scanLineStyle]}/>
+
+                        {/* Button is now a sibling, outside the GestureDetector's subtree */}
+                        <View className="absolute bottom-[55px] left-0 right-0 items-center">
+                            <Pressable onPress={captureImage} className="w-[55px] h-[55px] items-center justify-center rounded-full bg-[#586256]">
+                                <ScanText color={'white'}/>
+                            </Pressable>
+                        </View>
+
+                        <View className="absolute bottom-5 left-0 right-0 items-center">
+                            <Text className="text-white" style={{fontFamily:'Inter_24pt-Regular'}}>Swipe down to open in full mode</Text>
+                        </View>
+                    </View>
+                :
+                    <Pressable onPress={() => setActiveCamera(true)} className="w-full h-full">
+                        <Image source={require('../assets/instuction.png')} className="w-full h-full" resizeMode="cover" />
+                        <View className="absolute bottom-[55px] left-0 right-0 items-center">
+                            <Pressable onPress={() => setActiveCamera(true)} className="h-[45px] px-4 flex-row items-center justify-center gap-2 rounded-[24px] bg-[#586256]" style={{ elevation: 6, shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.3, shadowRadius: 6}}>
+                                <ScanText color={'white'} size={20} />
+                                <Text className="text-white text-[16px]" style={{fontFamily: 'Inter_18pt-SemiBold'}}>Scan</Text>
+                            </Pressable>
+                        </View>
                     </Pressable>
-                </GestureDetector>
+                }
             </View>
+        </View>
 
             <View className="flex-row items-center justify-between px-4 py-2 bg-[#eaeee3]">
                 <View className="flex-row items-center gap-[5px]">
