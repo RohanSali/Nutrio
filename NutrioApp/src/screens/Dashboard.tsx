@@ -21,7 +21,8 @@ export function Dashboard() {
     const scanLinePosition = useSharedValue(0);
     const [containerHeight, setContainerHeight] = useState(0);
 
-    const initial = name[0];
+    const firstName = name.trim().split(/\s+/)[0] || '';
+    const initial = firstName[0]?.toUpperCase() ?? '';
 
     useEffect(() => {
         if (!uid) return;
@@ -105,7 +106,7 @@ export function Dashboard() {
     <SafeAreaView className="flex-1 bg-[#eaeee3]" style={{ flex: 1 }}>
         <ScrollView className="flex-1 px-4 bg-[#eaeee3]" contentContainerStyle={{ paddingTop: 10, paddingBottom: 0,rowGap: 5}} showsVerticalScrollIndicator={false}>
             <View className="h-[auto] px-4 flex-row justify-between items-center bg-[#eaeee3]"> 
-                <Text className="text-[30px] text-black color-[#586256]" style={{fontFamily:'Inter_18pt-SemiBold'}}>Hello, {name}!</Text>
+                <Text className="text-[30px] text-black color-[#586256]" style={{fontFamily:'Inter_18pt-SemiBold'}}>Hello, {firstName}!</Text>
                 <Pressable onPress={() => navigation.navigate('ProfileScreen')} className="w-[45px] h-[45px] items-center justify-center rounded-full bg-[#586256]">
                     <Text className="text-white text-center text-[24px]" style={{fontFamily:'Inter_18pt-SemiBold'}}>{initial}</Text>
                 </Pressable>
@@ -117,7 +118,7 @@ export function Dashboard() {
 
                         {/* Gesture only wraps the camera feed itself */}
                         <GestureDetector gesture={swipeDownGesture}>
-                            <Camera style={{ width: '100%', height: '100%' }} cameraType={CameraType.Back} />
+                            <Camera ref={cameraRef} style={{ width: '100%', height: '100%' }} cameraType={CameraType.Back} />
                         </GestureDetector>
 
                         <Animated.View style={[{position: 'absolute', left:0, right: 0, height: 2, backgroundColor:'#3b82f6', shadowColor: '#3b82f6', shadowOpacity: 0.8, shadowRadius: 8, shadowOffset: { width: 0, height: 0 }, elevation: 6}, scanLineStyle]}/>
