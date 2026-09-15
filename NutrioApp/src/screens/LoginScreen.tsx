@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -11,16 +11,19 @@ import { KeyboardAwareScrollView } from "react-native-keyboard-aware-scroll-view
 import Svg, { Path } from "react-native-svg";
 import {
   GoogleAuthProvider,
+  createUserWithEmailAndPassword,
   getAuth,
+  reload,
+  sendEmailVerification,
   signInWithCredential,
   signInWithEmailAndPassword,
+  signOut,
 } from "@react-native-firebase/auth";
 import {
   GoogleSignin,
   statusCodes,
 } from "@react-native-google-signin/google-signin";
 import { ensureUserProfile } from "../scripts/firestore_handler";
-import { authRequest } from "../config/api";
 
 GoogleSignin.configure({
   webClientId: "84798314876-4psmao69rp1l6olk5m4nrndfsgfnbhpr.apps.googleusercontent.com",
@@ -35,56 +38,10 @@ export function LoginScreen() {
   const [showPassword, setShowPassword] = useState<boolean>(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(false);
   const [isCreatingAccount, setIsCreatingAccount] = useState<boolean>(false);
-  const [otp, setOtp] = useState<string>("");
-  const [verificationToken, setVerificationToken] = useState<string | null>(null);
-  const [otpCooldown, setOtpCooldown] = useState<number>(0);
-  const [otpLoading, setOtpLoading] = useState<boolean>(false);
 
   // Loading flags (kept separate so one spinner doesn't disable every button)
   const [loading, setLoading] = useState<boolean>(false);
   const [googleLoading, setGoogleLoading] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (otpCooldown === 0) return;
-    const timer = setInterval(() => setOtpCooldown((value) => Math.max(0, value - 1)), 1000);
-    return () => clearInterval(timer);
-  }, [otpCooldown]);
-
-  const handleSendOtp = async (): Promise<void> => {
-    const cleanEmail = email.trim();
-    if (!cleanEmail) {
-      Alert.alert("Missing email", "Enter your email before requesting a code.");
-      return;
-    }
-    try {
-      setOtpLoading(true);
-      await authRequest("/api/auth/send-email-otp", { email: cleanEmail });
-      setVerificationToken(null);
-      setOtpCooldown(120);
-      Alert.alert("Code sent", "Check your email for the six-digit verification code.");
-    } catch (error: any) {
-      Alert.alert("Unable to send code", error.message || "Please try again.");
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async (): Promise<void> => {
-    if (!/^\d{6}$/.test(otp)) {
-      Alert.alert("Invalid code", "Enter the six-digit code from your email.");
-      return;
-    }
-    try {
-      setOtpLoading(true);
-      const result = await authRequest<{ verificationToken: string }>("/api/auth/verify-email-otp", { email: email.trim(), otp });
-      setVerificationToken(result.verificationToken);
-      Alert.alert("Email verified", "You can now create your Nutrio account.");
-    } catch (error: any) {
-      Alert.alert("Verification failed", error.message || "Please try again.");
-    } finally {
-      setOtpLoading(false);
-    }
-  };
 
   const friendlyErrorMessage = (error: any, fallback: string): string => {
     switch (error?.code) {
@@ -140,22 +97,44 @@ export function LoginScreen() {
       const auth = getAuth();
 
       if (isCreatingAccount) {
-        if (!verificationToken) {
-          Alert.alert("Verify your email", "Request and verify the OTP before creating your account.");
+        const credential = await createUserWithEmailAndPassword(
+          auth,
+          cleanEmail,
+          password
+        );
+        await sendEmailVerification(credential.user);
+        Alert.alert(
+          "Verify your email",
+          "Go to your email and click the verification link. After successful verification, return here and sign in.",
+          [
+            {
+              text: "OK",
+              onPress: async () => {
+                await signOut(auth);
+                setEmail("");
+                setPassword("");
+                setConfirmPassword("");
+                setShowPassword(false);
+                setShowConfirmPassword(false);
+                setIsCreatingAccount(false);
+              },
+            },
+          ]
+        );
+      } else {
+        const credential = await signInWithEmailAndPassword(auth, cleanEmail, password);
+        await reload(credential.user);
+
+        if (!credential.user.emailVerified) {
+          await signOut(auth);
+          Alert.alert(
+            "Email not verified",
+            "Open the verification link in your email before signing in."
+          );
           return;
         }
-        const registration = await authRequest<{ uid: string }>("/api/auth/register", {
-          email: cleanEmail,
-          password,
-          verification_token: verificationToken,
-        });
-        const credential = await signInWithEmailAndPassword(auth, cleanEmail, password);
-        if (credential.user.uid !== registration.uid) {
-          throw new Error("The created account could not be verified.");
-        }
+
         await ensureUserProfile(credential.user.uid);
-      } else {
-        await signInWithEmailAndPassword(auth, cleanEmail, password);
       }
     } catch (error: any) {
       Alert.alert(
@@ -221,7 +200,7 @@ export function LoginScreen() {
     }
   };
 
-  const anyLoading = loading || googleLoading || otpLoading;
+  const anyLoading = loading || googleLoading;
 
   return (
     <KeyboardAwareScrollView className="flex-1 bg-[#EAEEE3]" contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled" enableOnAndroid enableAutomaticScroll extraScrollHeight={24} keyboardOpeningTime={0}>
@@ -267,14 +246,13 @@ export function LoginScreen() {
           </View>
 
           {isCreatingAccount && <View className="mb-7"><Text className="mb-2 text-sm font-semibold text-[#586256]">Confirm Password</Text><View className="relative justify-center"><TextInput value={confirmPassword} onChangeText={setConfirmPassword} placeholder="Re-enter your password" placeholderTextColor="#9CA3AF" secureTextEntry={!showConfirmPassword} autoCapitalize="none" autoCorrect={false} editable={!anyLoading} className="h-14 rounded-2xl border border-gray-200 bg-[#FBF5EE] px-4 pr-12 text-base text-gray-900" /><Pressable onPress={() => setShowConfirmPassword((value) => !value)} hitSlop={10} className="absolute right-4"><Text className="text-sm font-medium text-gray-500">{showConfirmPassword ? "Hide" : "Show"}</Text></Pressable></View></View>}
-          {isCreatingAccount && <View className="mb-7"><Text className="mb-2 text-sm font-semibold text-[#586256]">Email verification</Text><View className="flex-row gap-2"><TextInput value={otp} onChangeText={setOtp} placeholder="6-digit OTP" placeholderTextColor="#9CA3AF" keyboardType="number-pad" maxLength={6} editable={!anyLoading && !verificationToken} className="h-14 flex-1 rounded-2xl border border-gray-200 bg-[#FBF5EE] px-4 text-base text-gray-900" /><Pressable onPress={verificationToken ? undefined : otp ? handleVerifyOtp : handleSendOtp} disabled={anyLoading || otpCooldown > 0 && !otp} className="h-14 items-center justify-center rounded-2xl bg-[#586256] px-4"><Text className="text-sm font-semibold text-white">{verificationToken ? "Verified" : otp ? "Verify" : otpCooldown > 0 ? `${otpCooldown}s` : "Send OTP"}</Text></Pressable></View><Pressable onPress={handleSendOtp} disabled={anyLoading || otpCooldown > 0 || !!verificationToken} className="mt-2 self-end"><Text className="text-sm font-semibold text-[#586256]">{otpCooldown > 0 ? `Resend in ${otpCooldown}s` : "Resend OTP"}</Text></Pressable></View>}
           {!isCreatingAccount && <View className="mb-7" />}
 
           <Pressable onPress={handleEmailAuth} disabled={anyLoading} className={`h-14 items-center justify-center rounded-2xl ${anyLoading ? "bg-gray-400" : "bg-[#586256]"}`}>
             {loading ? <ActivityIndicator color="#FFFFFF" /> : <Text className="text-base font-semibold text-white">{isCreatingAccount ? "Create Account" : "Sign In"}</Text>}
           </Pressable>
 
-          <View className="mt-7 flex-row items-center justify-center"><Text className="text-sm text-gray-600">{isCreatingAccount ? "Already have an account?" : "Don't have an account?"}</Text><Pressable onPress={() => { setIsCreatingAccount((value) => !value); setConfirmPassword(""); setOtp(""); setVerificationToken(null); setOtpCooldown(0); setShowConfirmPassword(false); }} disabled={anyLoading} className="ml-1"><Text className="text-sm font-semibold text-[#586256]">{isCreatingAccount ? "Sign In" : "Create one"}</Text></Pressable></View>
+          <View className="mt-7 flex-row items-center justify-center"><Text className="text-sm text-gray-600">{isCreatingAccount ? "Already have an account?" : "Don't have an account?"}</Text><Pressable onPress={() => { setIsCreatingAccount((value) => !value); setConfirmPassword(""); setShowConfirmPassword(false); }} disabled={anyLoading} className="ml-1"><Text className="text-sm font-semibold text-[#586256]">{isCreatingAccount ? "Sign In" : "Create one"}</Text></Pressable></View>
         </View>
       </View>
     </KeyboardAwareScrollView>

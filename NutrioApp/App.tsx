@@ -8,7 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { getAuth, onAuthStateChanged, type User } from "@react-native-firebase/auth";
+import { getAuth, onAuthStateChanged, reload, type User } from "@react-native-firebase/auth";
 import { subscribeToOnboardingStatus } from "./src/scripts/firestore_handler";
 
 import { Dashboard } from './src/screens/Dashboard';
@@ -51,7 +51,17 @@ export function AppNavigator() {
   const uid = user?.uid;
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(getAuth(), (currentUser) => {
+    const unsubscribe = onAuthStateChanged(getAuth(), async (currentUser) => {
+      if (currentUser && currentUser.providerData.some((provider) => provider.providerId === "password")) {
+        await reload(currentUser);
+      }
+
+      if (currentUser && !currentUser.emailVerified) {
+        setUser(null);
+        setAuthInitializing(false);
+        return;
+      }
+
       setUser(currentUser);
       setAuthInitializing(false);
     });

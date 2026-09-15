@@ -45,7 +45,7 @@ export function ImagePreviewScreen() {
             setUploading(true);
             const uploadResult = await uploadImageToBackend({ uri, mimeType: 'image/jpeg' }, user);
             await createScanRecord(user.uid, uploadResult.scanId, uploadResult.url);
-            navigation.navigate('History');
+            navigation.navigate('Dashboard');
         } catch (error) {
             console.error('Failed to save scan:', error);
             Alert.alert('Upload failed', 'We could not save your scan. Please try again.');
