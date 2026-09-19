@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 from app.routes.images import router as images_router
+from app.routes.process_scanned_image import router as process_scanned_image_router
 
 
 app = FastAPI(
@@ -10,6 +11,7 @@ app = FastAPI(
 
 
 app.include_router(images_router)
+app.include_router(process_scanned_image_router)
 
 
 @app.get("/")
