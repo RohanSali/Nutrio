@@ -5,7 +5,7 @@ import { RotateCcw, Check, Crop } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { getAuth } from '@react-native-firebase/auth';
 import { createScanRecord } from '../scripts/firestore_handler';
-import { uploadImageToBackend } from '../scripts/image_upload';
+import { processImageToBackend } from '../scripts/process_scans';
 import ImageEditor from '@react-native-community/image-editor';
 import { ResizableCropper, ResizableCropperHandle } from './ResizableCropper';
 
@@ -16,7 +16,6 @@ export function ImagePreviewScreen() {
     const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
     const [uri, setUri] = useState(initialUri);
-    const [uploading, setUploading] = useState(false);
     const [isCropping, setIsCropping] = useState(false);
     const [naturalSize, setNaturalSize] = useState<{ width: number; height: number } | null>(null);
 
@@ -35,22 +34,20 @@ export function ImagePreviewScreen() {
     };
 
     const handleDone = async () => {
-        if (uploading) return;
         const user = getAuth().currentUser;
         if (!user) {
-            Alert.alert('Upload failed', 'Please sign in again and try again.');
+            Alert.alert('Processing failed', 'Please sign in again and try again.');
             return;
         }
+        navigation.navigate('Processing');
+
         try {
-            setUploading(true);
-            const uploadResult = await uploadImageToBackend({ uri, mimeType: 'image/jpeg' }, user);
-            await createScanRecord(user.uid, uploadResult.scanId, uploadResult.url);
-            navigation.navigate('Dashboard');
+            const processResult = await processImageToBackend({ uri, mimeType: 'image/jpeg' }, user);
+            await createScanRecord(user.uid, processResult.scanId, processResult.url, processResult);
+            navigation.replace('Processing', { scanId: processResult.scanId });
         } catch (error) {
             console.error('Failed to save scan:', error);
-            Alert.alert('Upload failed', 'We could not save your scan. Please try again.');
-        } finally {
-            setUploading(false);
+            navigation.replace('Processing', { processingStatus: 'Failed' });
         }
     };
 
@@ -124,11 +121,11 @@ export function ImagePreviewScreen() {
                     <Text className="text-white text-[13px]">Crop</Text>
                 </Pressable>
 
-                <Pressable onPress={handleDone} disabled={uploading} className="items-center justify-center">
+                <Pressable onPress={handleDone} className="items-center justify-center">
                     <View className="w-[56px] h-[56px] rounded-full bg-[#586256] items-center justify-center mb-1">
-                        {uploading ? <Text className="text-white text-[12px]">...</Text> : <Check color="white" size={24} />}
+                        <Check color="white" size={24} />
                     </View>
-                    <Text className="text-white text-[13px]">{uploading ? 'Uploading' : 'Done'}</Text>
+                    <Text className="text-white text-[13px]">Done</Text>
                 </Pressable>
             </View>
         </SafeAreaView>

@@ -29,6 +29,7 @@ export type ScanRecord = {
   allergiesDetected: string[];
   alternativeProducts: string[];
   processedFindings: string[];
+  processingStatus: string | null;
 };
 
 const getUserProfileReference = (uid: string) =>
@@ -43,20 +44,30 @@ const getScanHistoryReference = (uid: string, scanId: string) =>
 export async function createScanRecord(
   uid: string,
   scanId: string,
-  imageUrl: string
+  imageUrl: string,
+  results?: Pick<
+    ScanRecord,
+    | "scores"
+    | "grade"
+    | "allergiesDetected"
+    | "alternativeProducts"
+    | "processedFindings"
+    | "processingStatus"
+  >
 ): Promise<void> {
   const scan: ScanRecord = {
     userId: uid,
     imageUrl,
-    scores: {
+    scores: results?.scores ?? {
       calories: null,
       nutrients: null,
       healthImpact: null,
     },
-    grade: null,
-    allergiesDetected: [],
-    alternativeProducts: [],
-    processedFindings: [],
+    grade: results?.grade ?? null,
+    allergiesDetected: results?.allergiesDetected ?? [],
+    alternativeProducts: results?.alternativeProducts ?? [],
+    processedFindings: results?.processedFindings ?? [],
+    processingStatus: results?.processingStatus ?? null,
   };
 
   await setDoc(getScanReference(scanId), scan);
@@ -64,6 +75,20 @@ export async function createScanRecord(
     scanId,
     timestamp: serverTimestamp(),
   });
+}
+
+export function subscribeToScanRecord(
+  scanId: string,
+  onChange: (scan: ScanRecord | null) => void,
+  onError: (error: FirestoreError) => void
+): Unsubscribe {
+  return onSnapshot(
+    getScanReference(scanId),
+    (snapshot) => {
+      onChange(snapshot.exists() ? (snapshot.data() as ScanRecord) : null);
+    },
+    onError
+  );
 }
 
 export async function ensureUserProfile(uid: string): Promise<void> {
