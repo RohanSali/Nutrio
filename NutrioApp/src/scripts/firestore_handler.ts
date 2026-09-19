@@ -1,8 +1,11 @@
 import {
   doc,
+  collection,
   getDoc,
   getFirestore,
   onSnapshot,
+  orderBy,
+  query,
   serverTimestamp,
   setDoc,
   type FirestoreError,
@@ -93,6 +96,12 @@ export type ScanRecord = {
   constituentsBreakdown: ConstituentsBreakdown;
   alternativeProducts: AlternativeProduct[];
   processingStatus: ProcessingStatus | null;
+};
+
+export type ScanLog = {
+  scanId: string;
+  timestamp: Date | null;
+  scan: ScanRecord | null;
 };
 
 /* References */
@@ -405,4 +414,47 @@ export async function updateUserSettings(
   settings: Pick<UserProfile, "language" | "units" | "theme">
 ): Promise<void> {
   await setDoc(getUserProfileReference(uid), settings, { merge: true });
+}
+
+export function subscribeToUserScanHistory(
+  uid: string,
+  onChange: (logs: ScanLog[]) => void,
+  onError: (error: FirestoreError) => void
+): Unsubscribe {
+  const historyReference = collection(getFirestore(), "history", uid, "scans");
+  const historyQuery = query(historyReference, orderBy("timestamp", "desc"));
+
+  return onSnapshot(
+    historyQuery,
+    async (snapshot) => {
+      try {
+        const logs = await Promise.all(
+          snapshot.docs.map(async (historySnapshot) => {
+            const data = historySnapshot.data() as {
+              scanId?: string;
+              timestamp?: { toDate?: () => Date } | Date | null;
+            };
+            const scanId = data.scanId ?? historySnapshot.id;
+            const timestamp =
+              data.timestamp && "toDate" in data.timestamp && data.timestamp.toDate
+                ? data.timestamp.toDate()
+                : data.timestamp instanceof Date
+                  ? data.timestamp
+                  : null;
+
+            return {
+              scanId,
+              timestamp,
+              scan: await getScanRecord(scanId),
+            };
+          })
+        );
+
+        onChange(logs);
+      } catch (error) {
+        onError(error as FirestoreError);
+      }
+    },
+    onError
+  );
 }

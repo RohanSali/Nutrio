@@ -6,7 +6,7 @@ import { Camera, CameraType } from 'react-native-camera-kit';
 import {Gesture, GestureDetector} from 'react-native-gesture-handler';
 import { useNavigation } from '@react-navigation/native';
 import Animated, {useSharedValue,useAnimatedStyle,withRepeat,withTiming,Easing, cancelAnimation} from 'react-native-reanimated';
-import { type Language, type Theme, type Units, type UserProfile, subscribeToUserProfile } from "../scripts/firestore_handler";
+import { type UserProfile, type ScanLog, subscribeToUserProfile, subscribeToUserScanHistory } from "../scripts/firestore_handler";
 import { getAuth } from "@react-native-firebase/auth";
 
 export function Dashboard() {
@@ -14,6 +14,8 @@ export function Dashboard() {
     const uid = getAuth().currentUser?.uid;
     const [name, setName] = useState('');
     const [profile, setProfile] = useState<UserProfile>();
+    const [scanLogs, setScanLogs] = useState<ScanLog[]>([]);
+    const [scanLogsLoading, setScanLogsLoading] = useState(true);
 
     const navigation = useNavigation<any>();
     const cameraRef = useRef<any>(null);
@@ -43,6 +45,22 @@ export function Dashboard() {
     }, [uid]);
 
     useEffect(() => {
+        if (!uid) return;
+
+        return subscribeToUserScanHistory(
+            uid,
+            (logs) => {
+                setScanLogs(logs);
+                setScanLogsLoading(false);
+            },
+            (error) => {
+                console.error('Failed to load scan history:', error);
+                setScanLogsLoading(false);
+            }
+        );
+    }, [uid]);
+
+    useEffect(() => {
         if (!activeCamera) return;
 
         const timer = setTimeout(() => {
@@ -69,7 +87,7 @@ export function Dashboard() {
         return () => {
             cancelAnimation(scanLinePosition);
         };
-        }, [activeCamera]);
+        }, [activeCamera, scanLinePosition]);
 
     const scanLineStyle = useAnimatedStyle(() => {
         return {
@@ -158,40 +176,35 @@ export function Dashboard() {
                     <ChevronRight size={24} color="black" />
                 </View>
             </View>
-            <Pressable onPress={() => console.log('Card 1 pressed')} className="w-full h-[110px] mb-3 rounded-[20px] bg-[#fbf5ee] border border-gray-200 flex-row items-center p-3">
-                <View className="w-[85px] h-[85px] rounded-[15px] overflow-hidden">
-                    <Image source={require('../assets/label.jpg')} className="w-full h-full" resizeMode="cover" />
-                </View>
-                <View className="flex-1 ml-4 justify-center">
-                    <Text className="text-black text-[14px]">Date: 07 Sep 2026</Text>
-                    <Text className="text-black text-[14px] mt-1">Calories: 450 kcal</Text>
-                    <Text className="text-black text-[14px] mt-1">Nutrient: Protein 25g</Text>
-                    <Text className="text-black text-[14px] mt-1 font-bold">B Grade</Text>
-                </View>
-            </Pressable>
-            <Pressable onPress={() => console.log('Card 1 pressed')} className="w-full h-[110px] mb-3 rounded-[20px] bg-[#fbf5ee] border border-gray-200 flex-row items-center p-3">
-                <View className="w-[85px] h-[85px] rounded-[15px] overflow-hidden">
-                    <Image source={require('../assets/label.jpg')} className="w-full h-full" resizeMode="cover" />
-                </View>
-                <View className="flex-1 ml-4 justify-center">
-                    <Text className="text-black text-[14px]">Date: 07 Sep 2026</Text>
-                    <Text className="text-black text-[14px] mt-1">Calories: 450 kcal</Text>
-                    <Text className="text-black text-[14px] mt-1">Nutrient: Protein 25g</Text>
-                    <Text className="text-black text-[14px] mt-1 font-bold">B Grade</Text>
-                </View>
-            </Pressable>
-            <Pressable onPress={() => console.log('Card 1 pressed')} className="w-full h-[110px] mb-3 rounded-[20px] bg-[#fbf5ee] border border-gray-200 flex-row items-center p-3">
-                <View className="w-[85px] h-[85px] rounded-[15px] overflow-hidden">
-                    <Image source={require('../assets/label.jpg')} className="w-full h-full" resizeMode="cover" />
-                </View>
-                <View className="flex-1 ml-4 justify-center">
-                    <Text className="text-black text-[14px]">Date: 07 Sep 2026</Text>
-                    <Text className="text-black text-[14px] mt-1">Calories: 450 kcal</Text>
-                    <Text className="text-black text-[14px] mt-1">Nutrient: Protein 25g</Text>
-                    <Text className="text-black text-[14px] mt-1 font-bold">B Grade</Text>
-                </View>
-            </Pressable>
+            {scanLogsLoading ? (
+                <Text className="py-6 text-center text-gray-500">Loading scans...</Text>
+            ) : scanLogs.length === 0 ? (
+                <Text className="py-6 text-center text-gray-500">No scans yet.</Text>
+            ) : (
+                scanLogs.slice(0, 3).map((log) => (
+                    <ScanLogCard key={log.scanId} log={log} onPress={() => navigation.navigate('Analytics', { scanId: log.scanId })} />
+                ))
+            )}
         </ScrollView>
     </SafeAreaView>
   );
+}
+
+function ScanLogCard({ log, onPress }: { log: ScanLog; onPress: () => void }) {
+    const scan = log.scan;
+    const date = log.timestamp ? log.timestamp.toLocaleDateString() : 'Date unavailable';
+
+    return (
+        <Pressable onPress={onPress} className="w-full h-[110px] mb-3 rounded-[20px] bg-[#fbf5ee] border border-gray-200 flex-row items-center p-3">
+            <View className="w-[85px] h-[85px] rounded-[15px] overflow-hidden bg-gray-200">
+                {scan?.imageUrl ? <Image source={{ uri: scan.imageUrl }} className="w-full h-full" resizeMode="cover" /> : null}
+            </View>
+            <View className="flex-1 ml-4 justify-center">
+                <Text className="text-black text-[14px]">Date: {date}</Text>
+                <Text className="text-black text-[14px] mt-1">{scan?.foodDetected || 'Scan processing'}</Text>
+                <Text className="text-black text-[14px] mt-1">Calories: {scan?.scores.calories ?? '--'}</Text>
+                <Text className="text-black text-[14px] mt-1 font-bold">{scan?.grade ? `${scan.grade} Grade` : scan?.processingStatus || '--'}</Text>
+            </View>
+        </Pressable>
+    );
 }
