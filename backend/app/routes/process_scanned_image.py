@@ -2,6 +2,7 @@ import asyncio
 import random
 
 from fastapi import APIRouter, BackgroundTasks, File, Header, HTTPException, UploadFile
+from firebase_admin import firestore
 
 from app.routes.images import upload_user_image
 from app.services.firebase import get_firestore_client
@@ -105,6 +106,7 @@ async def process_image(
     })
     firestore_client.collection("history", uid, "scans").document(scan_id).set({
         "scanId": scan_id,
+        "timestamp": firestore.SERVER_TIMESTAMP,
     })
     background_tasks.add_task(run_scan_processing, scan_id)
 
