@@ -11,7 +11,7 @@ export function ProcessingScreen() {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
   const [scan, setScan] = useState<ScanRecord | null>(null);
-  const [failed, setFailed] = useState(route.params?.processingStatus === "Failed");
+  const [failed, setFailed] = useState(route.params?.processingStatus === "failed");
 
   useEffect(() => {
     const unsubscribe = navigation.addListener("beforeRemove", (event: any) => {
@@ -32,10 +32,10 @@ export function ProcessingScreen() {
       scanId,
       (nextScan) => {
         setScan(nextScan);
-        if (nextScan?.processingStatus === "Success") {
+        if (nextScan?.processingStatus === "complete") {
           navigation.replace("Analytics", { scanId });
         }
-        if (nextScan?.processingStatus === "Failed") {
+        if (nextScan?.processingStatus === "failed") {
           setFailed(true);
         }
       },
@@ -47,7 +47,7 @@ export function ProcessingScreen() {
   }, [navigation, route.params?.scanId]);
 
   const goToDashboard = () => navigation.replace("Dashboard");
-  const status = failed ? "Failed" : scan?.processingStatus || "Processing";
+  const status = failed ? "failed" : scan?.processingStatus || "pending";
 
   return (
     <SafeAreaView className="flex-1 bg-[#eaeee3]">

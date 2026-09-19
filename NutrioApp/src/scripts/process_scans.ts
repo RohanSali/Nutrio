@@ -11,15 +11,6 @@ export interface ImageUploadResult {
 }
 
 export interface ImageProcessResult extends ImageUploadResult {
-  scores: {
-    calories: number | null;
-    nutrients: number | null;
-    healthImpact: number | null;
-  };
-  grade: string | null;
-  allergiesDetected: string[];
-  alternativeProducts: string[];
-  processedFindings: string[];
   processingStatus: string | null;
 }
 

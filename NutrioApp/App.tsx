@@ -21,6 +21,7 @@ import { Import } from "lucide-react-native";
 import { ImagePreviewScreen } from "./src/screens/ImagePreviewScreen";
 import { AnalyticsScreen } from "./src/screens/AnalyticsScreen";
 import { ProcessingScreen } from "./src/screens/ProcessingScreen";
+import { ImageViewerScreen } from "./src/screens/ImageViewerScreen";
 import TestScreen from "./src/screens/TestScreen";
 
 cssInterop(SafeAreaView, { className: 'style' });
@@ -129,6 +130,7 @@ export function AppNavigator() {
           <Stack.Screen name="ImagePreview" component={ImagePreviewScreen}/>
           <Stack.Screen name="Analytics" component={AnalyticsScreen}/>
           <Stack.Screen name="Processing" component={ProcessingScreen}/>
+          <Stack.Screen name="ImageViewer" component={ImageViewerScreen}/>
         </>
       ) : user ? (
         <Stack.Screen name="FetchInfoScreen" component={FetchInfoScreen} />

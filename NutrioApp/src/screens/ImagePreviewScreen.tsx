@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { RotateCcw, Check, Crop } from 'lucide-react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { getAuth } from '@react-native-firebase/auth';
-import { createScanRecord } from '../scripts/firestore_handler';
 import { processImageToBackend } from '../scripts/process_scans';
 import ImageEditor from '@react-native-community/image-editor';
 import { ResizableCropper, ResizableCropperHandle } from './ResizableCropper';
@@ -43,7 +42,6 @@ export function ImagePreviewScreen() {
 
         try {
             const processResult = await processImageToBackend({ uri, mimeType: 'image/jpeg' }, user);
-            await createScanRecord(user.uid, processResult.scanId, processResult.url, processResult);
             navigation.replace('Processing', { scanId: processResult.scanId });
         } catch (error) {
             console.error('Failed to save scan:', error);
